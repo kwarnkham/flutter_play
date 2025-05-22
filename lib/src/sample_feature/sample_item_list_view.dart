@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../settings/settings_view.dart';
 import 'sample_item.dart';
-import 'sample_item_details_view.dart';
 
 /// Displays a list of SampleItems.
 class SampleItemListView extends StatefulWidget {
@@ -22,6 +21,21 @@ class _SampleItemListViewState extends State<SampleItemListView> {
     const SampleItem(2),
     const SampleItem(3)
   ];
+
+  late final GlobalKey<AnimatedListState> _listKey;
+
+  @override
+  void initState() {
+    _listKey = GlobalKey<AnimatedListState>();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _listKey.currentState?.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,27 +66,21 @@ class _SampleItemListViewState extends State<SampleItemListView> {
             children: [
               TextButton(
                   onPressed: () {
-                    setState(() {
-                      items.insert(
-                        // items.length,
-                        0,
-                        SampleItem(DateTime.now().millisecondsSinceEpoch),
-                      );
-                    });
+                    int index = 0;
+                    items.insert(
+                      index,
+                      SampleItem(DateTime.now().millisecondsSinceEpoch),
+                    );
+                    _listKey.currentState?.insertItem(index);
                   },
                   child: const Text('add')),
             ],
           ),
           Expanded(
             child: RepaintBoundary(
-              child: ListView.builder(
-                reverse: false,
-                // Providing a restorationId allows the ListView to restore the
-                // scroll position when a user leaves and returns to the app after it
-                // has been killed while running in the background.
-                restorationId: 'sampleItemListView',
-                itemCount: items.length,
-                itemBuilder: (BuildContext context, int index) {
+              child: AnimatedList(
+                key: _listKey,
+                itemBuilder: (context, index, animation) {
                   final item = items[index];
 
                   return ListTile(
@@ -96,6 +104,11 @@ class _SampleItemListViewState extends State<SampleItemListView> {
                         });
                       });
                 },
+                reverse: true,
+                // Providing a restorationId allows the ListView to restore the
+                // scroll position when a user leaves and returns to the app after it
+                // has been killed while running in the background.
+                initialItemCount: items.length,
               ),
             ),
           ),
